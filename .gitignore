@@ -1,0 +1,9 @@
+/.classpath
+/.project
+/.settings/
+/.idea/
+/target/
+*.iml
+*.releaseBackup
+release.properties
+/.claude/settings.local.json
