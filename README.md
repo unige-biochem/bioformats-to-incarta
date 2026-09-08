@@ -1,6 +1,6 @@
 # Bio-Formats to IN Carta
 
-[![build](https://github.com/unige-biochem/bioformats-to-incarta/actions/workflows/build-main.yml/badge.svg)](https://github.com/unige-biochem/bioformats-to-incarta/actions/workflows/build-main.yml)
+[![Build Status](https://github.com/unige-biochem/bioformats-to-incarta/actions/workflows/build.yml/badge.svg)](https://github.com/unige-biochem/bioformats-to-incarta/actions/workflows/build.yml)
 
 Converts any Bio-Formats supported image file into an IN Carta compatible format.
 
