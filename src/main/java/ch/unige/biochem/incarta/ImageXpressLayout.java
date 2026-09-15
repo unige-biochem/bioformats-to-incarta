@@ -61,6 +61,13 @@ public class ImageXpressLayout implements IncartaLayout {
 	};
 
 	/**
+	 * Emission wavelength declared for a channel whose source does not say. IN
+	 * Carta rejects a {@code <Wavelengths>} filter without one ("Wavelength must
+	 * not be empty"), so a value has to be written: this one is fiction.
+	 */
+	static final double UNKNOWN_EMISSION_NM = 500;
+
+	/**
 	 * Physical geometry of the standard microplate formats, keyed by
 	 * {@code rows * columns}: well spacing, centre of well A1 relative to the
 	 * plate corner and well size, all in millimetres, plus the well shape.
@@ -68,6 +75,10 @@ public class ImageXpressLayout implements IncartaLayout {
 	 * The {@code .xdce} declares this geometry and the source rarely does, so it
 	 * is filled in from the ANSI/SLAS footprint when the plate has a standard
 	 * well count, and omitted entirely when it does not.
+	 * <p>
+	 * OME's {@code Plate/@WellOriginX/Y} is no substitute: it is the origin of
+	 * the fields within a well, not the position of well A1 on the plate, and a
+	 * fake plate sets it to 0, which IN Carta rejects ("must be greater than 0").
 	 */
 	private static final class Footprint {
 
@@ -240,12 +251,9 @@ public class ImageXpressLayout implements IncartaLayout {
 			out.write("\t\t\t<WellParameters width=\"" + decimal(footprint.size) +
 				"\" unit=\"mm\" height=\"" + decimal(footprint.size) + "\" size=\"" +
 				decimal(footprint.size) + "\" shape=\"" + footprint.shape + "\"/>\n");
-			final double originX = dataset.wellOriginXMm() == null ? footprint.originX
-				: dataset.wellOriginXMm();
-			final double originY = dataset.wellOriginYMm() == null ? footprint.originY
-				: dataset.wellOriginYMm();
 			out.write("\t\t\t<TopLeftWellCenterOffset horizontal=\"" + decimal(
-				originX) + "\" vertical=\"" + decimal(originY) + "\" unit=\"mm\"/>\n");
+				footprint.originX) + "\" vertical=\"" + decimal(footprint.originY) +
+				"\" unit=\"mm\"/>\n");
 			out.write("\t\t\t<WellSpacing horizontal=\"" + decimal(footprint.spacing) +
 				"\" vertical=\"" + decimal(footprint.spacing) + "\" unit=\"mm\"/>\n");
 		}
@@ -281,10 +289,10 @@ public class ImageXpressLayout implements IncartaLayout {
 				"\" z_step=\"" + decimal(zStep(dataset)) + "\">\n");
 			final StringBuilder filter = new StringBuilder(
 				"\t\t\t\t<EmissionFilter name=\"").append(xml(w.name())).append('"');
-			if (w.emissionNm() != null) {
-				filter.append(" wavelength=\"").append(integer(w.emissionNm())).append(
-					"\" unit=\"nm\"");
-			}
+			final double emission = w.emissionNm() == null ? UNKNOWN_EMISSION_NM : w
+				.emissionNm();
+			filter.append(" wavelength=\"").append(integer(emission)).append(
+				"\" unit=\"nm\"");
 			out.write(filter.append("/>\n").toString());
 			out.write("\t\t\t</Wavelength>\n");
 		}

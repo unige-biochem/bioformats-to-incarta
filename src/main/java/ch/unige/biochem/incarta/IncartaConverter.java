@@ -271,8 +271,6 @@ public class IncartaConverter {
 				if (rows != null && columns != null) {
 					dataset.plateSize(rows.getValue(), columns
 						.getValue());
-					dataset.wellOriginMm(millimetres(source.getPlateWellOriginX(0)),
-						millimetres(source.getPlateWellOriginY(0)));
 					return;
 				}
 			}
@@ -504,7 +502,8 @@ public class IncartaConverter {
 	{
 		try {
 			final String name = meta.getChannelName(series, channel);
-			return name == null ? "channel" + channel : name;
+			// LIF files leave some names empty, which would put name="" in the index.
+			return name == null || name.trim().isEmpty() ? "channel" + channel : name;
 		}
 		catch (final Exception e) {
 			return "channel" + channel;
@@ -570,10 +569,6 @@ public class IncartaConverter {
 
 	private static Double micrometres(final Length length) {
 		return convert(length, UNITS.MICROMETER);
-	}
-
-	private static Double millimetres(final Length length) {
-		return convert(length, UNITS.MILLIMETER);
 	}
 
 	private static Double nanometres(final Length length) {

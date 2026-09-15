@@ -94,7 +94,27 @@ public class ImageXpressLayoutTest {
 		assertTrue(xdce.contains("<Plate columns=\"12\" rows=\"8\""));
 		assertTrue(xdce.contains("pixel_width=\"0.170400\""));
 		assertTrue(xdce.contains("<WellSpacing horizontal=\"9.000000\""));
+		assertTrue(xdce.contains(
+			"<TopLeftWellCenterOffset horizontal=\"14.380000\" vertical=\"11.240000\" unit=\"mm\"/>"));
+		assertTrue(xdce.contains(
+			"<EmissionFilter name=\"DAPI\" wavelength=\"447\" unit=\"nm\"/>"));
 		assertTrue(xdce.endsWith("</ImageStack>\n"));
+	}
+
+	/** IN Carta refuses a protocol wavelength without an emission value. */
+	@Test
+	public void declaresAnEmissionWavelengthEvenWhenTheSourceHasNone()
+		throws Exception
+	{
+		final Path output = folder.newFolder("noEmission").toPath();
+		final DatasetDescription dataset = new DatasetDescription() //
+			.plateSize(8, 12) //
+			.addWavelength(0, "channel0", null);
+		layout.writeDatasetMetadata(output, dataset, planes());
+		final String xdce = read(output.resolve("plate1.xdce"));
+
+		assertTrue(xdce.contains(
+			"<EmissionFilter name=\"channel0\" wavelength=\"500\" unit=\"nm\"/>"));
 	}
 
 	@Test

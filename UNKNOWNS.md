@@ -24,6 +24,45 @@ Two constraints make this list unavoidable rather than lazy:
 
 ---
 
+## Trial import log
+
+What IN Carta has actually said. Newest first.
+
+### 2026-09-15 — `trial1-minimal-96well` (synthetic `.fake` plate)
+
+96-well, 2 sites, 2 channels, 2-D, 512×512 uint16, 0.65 µm/px. The `.xdce`
+was *validated* and three problems were reported, yet the import still went
+ahead and images were displayed, so these read as warnings rather than
+rejections:
+
+```
+ImageStack::AutoLeadAcquisitionProtocol::Wavelengths::EmissionFilter::Unit must not be empty
+ImageStack::AutoLeadAcquisitionProtocol::Wavelengths::EmissionFilter::Wavelength must not be empty
+ImageStack::AutoLeadAcquisitionProtocol::Plate::TopLeftWellCenterOffset::Horizontal must be greater than 0
+```
+
+What it settles:
+
+- **IN Carta validates the `.xdce` against rules**, attribute by attribute,
+  including value ranges. Omitting an attribute is not automatically safe.
+- **`<Wavelengths>/<Wavelength>/<EmissionFilter>` needs `wavelength` and
+  `unit`.** The per-image `<EmissionFilter>` was not flagged. Fixed: when the
+  source has no emission wavelength we now write
+  `ImageXpressLayout.UNKNOWN_EMISSION_NM` (500 nm). **That value is fiction.**
+- **`TopLeftWellCenterOffset` must be positive.** The fake plate's OME
+  `WellOriginX` was 0, and we used it. OME's `WellOrigin` is the origin of the
+  fields inside a well, not the position of well A1, so it was the wrong source
+  anyway. Fixed: the offset now always comes from the footprint table (B1).
+- **Not flagged:** `<Application name="bioformats-to-incarta">` (A2), the
+  missing MetaMorph TIFF block (A1), a 2-D wavelength (B4), missing
+  `<FocusPosition>`/`<PlatePosition_um>` and missing `<Exposure>` on some
+  images (A4). They may still matter at a later stage than validation; whether
+  the images shown were the right ones is not yet checked.
+
+Corrected output: `trial1b-minimal-96well-fixed`, not yet imported.
+
+---
+
 ## A. Settled only by a trial import
 
 These need a human at the instrument PC to import a converted dataset.
@@ -109,10 +148,13 @@ The `.xdce` declares physical plate geometry: `<WellParameters>`,
 spacing or well shape, so it cannot be derived from the source.
 
 **We write:** the ANSI/SLAS footprint for the well count (6, 12, 24, 48, 96,
-384, 1536 are tabulated in `ImageXpressLayout.Footprint`), overriding the
-origin with OME's `Plate/@WellOriginX/Y` when the source has it. For any other
+384, 1536 are tabulated in `ImageXpressLayout.Footprint`). For any other
 plate size we omit all three elements and keep only `<Plate columns rows
 name>`.
+
+**Known risk:** IN Carta checks `TopLeftWellCenterOffset` (it must be > 0, see
+the trial log), so omitting it probably triggers the same kind of warning. That
+includes the 1×1 plate invented for plateless sources (B2).
 
 **Would like:** a MetaXpress export of a **384-well** plate, to check the
 footprint numbers and confirm which attributes actually vary. Also useful: any

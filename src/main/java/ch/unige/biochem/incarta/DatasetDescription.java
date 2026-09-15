@@ -64,8 +64,6 @@ public class DatasetDescription {
 	private String plateModel;
 	private int plateRows = 1;
 	private int plateColumns = 1;
-	private Double wellOriginXMm;
-	private Double wellOriginYMm;
 	private int sizeX;
 	private int sizeY;
 	private Double pixelWidthUm;
@@ -88,13 +86,6 @@ public class DatasetDescription {
 	public DatasetDescription plateSize(final int rows, final int columns) {
 		this.plateRows = rows;
 		this.plateColumns = columns;
-		return this;
-	}
-
-	/** Centre of well A1 relative to the plate corner, in millimetres. */
-	public DatasetDescription wellOriginMm(final Double x, final Double y) {
-		this.wellOriginXMm = x;
-		this.wellOriginYMm = y;
 		return this;
 	}
 
@@ -149,8 +140,6 @@ public class DatasetDescription {
 	public String plateModel() { return plateModel; }
 	public int plateRows() { return plateRows; }
 	public int plateColumns() { return plateColumns; }
-	public Double wellOriginXMm() { return wellOriginXMm; }
-	public Double wellOriginYMm() { return wellOriginYMm; }
 	public int sizeX() { return sizeX; }
 	public int sizeY() { return sizeY; }
 	public Double pixelWidthUm() { return pixelWidthUm; }
