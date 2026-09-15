@@ -25,15 +25,26 @@ List<PlaneCoordinates> planes = IncartaConverter.convert(
 
 ## Status
 
-The reading side is complete: any Bio-Formats supported file is opened, plate
-metadata is resolved to well / field where the source carries it, and every
-plane is written out as a TIFF.
+Both halves are in place. Any Bio-Formats supported file is opened, plate
+metadata is resolved to well / field where the source carries it, every plane is
+written out as an uncompressed TIFF carrying the source pixel calibration, and
+an `.xdce` index describing every plane is written beside them.
 
-The **output layout is still a placeholder**. `DefaultIncartaLayout` invents a
-flat `<base>_<well>_f<field>_w<channel>_z<z>_t<t>.tif` naming; it exercises the
-pipeline but is not guaranteed to import. Replace it with the layout IN Carta
-actually expects — everything IN Carta specific lives behind the `IncartaLayout`
-interface, so nothing else has to change.
+The layout follows the MetaXpress / ImageXpress convention that normally feeds
+IN Carta, reverse-engineered from a reference plate export:
+
+```
+out/
+  plate1.xdce               <- XML index; the importer reads the plate through this
+  t1_E03_s1_w1_z1.tif       <- timepoint, well, site, wavelength, z - all 1-based
+  t1_E03_s1_w2_z1.tif
+  ...
+```
+
+**It has never been through a real IN Carta import.** Bio-Formats cannot read an
+`.xdce` back, so nothing in this repository can validate the output; only a
+trial import can. The decisions taken without evidence are listed in
+[UNKNOWNS.md](UNKNOWNS.md) - read it before trusting a converted plate.
 
 ## Architecture
 
@@ -41,8 +52,9 @@ interface, so nothing else has to change.
 |---|---|
 | `IncartaConverter` | Reads with Bio-Formats, writes one TIFF per plane |
 | `IncartaLayout` | Decides file naming, nesting, and the dataset metadata file |
-| `DefaultIncartaLayout` | Placeholder implementation of the above |
-| `PlaneCoordinates` | series / well / field / c / z / t of a single plane |
+| `ImageXpressLayout` | The MetaXpress naming plus the `.xdce` index writer |
+| `DatasetDescription` | Plate-level metadata the index file needs |
+| `PlaneCoordinates` | series / well / field / c / z / t of a plane, plus its stage position, exposure and pixel statistics |
 | `ConversionOptions` | series selection, compression, BigTIFF, overwrite |
 | `command.BioformatsToIncartaCommand` | The Fiji dialog around the converter |
 

@@ -27,6 +27,7 @@ package ch.unige.biochem.incarta.command;
 
 import java.io.File;
 import java.nio.file.Files;
+import java.util.stream.Stream;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -35,6 +36,7 @@ import org.scijava.Context;
 import org.scijava.log.LogService;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Runs the command against a minimal SciJava context: no UI service, so no
@@ -61,7 +63,9 @@ public class BioformatsToIncartaCommandTest {
 			command.outputDirectory = output;
 			command.run();
 			assertEquals(4, command.planesWritten);
-			assertEquals(4, output.list().length);
+			// Four planes plus the .xdce index that binds them together.
+			assertEquals(5, output.list().length);
+			assertTrue(Stream.of(output.list()).anyMatch(n -> n.endsWith(".xdce")));
 		}
 		finally {
 			context.dispose();

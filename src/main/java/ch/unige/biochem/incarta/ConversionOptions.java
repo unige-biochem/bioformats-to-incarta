@@ -31,7 +31,7 @@ public class ConversionOptions {
 	private boolean overwrite = false;
 	private int series = -1;
 	private boolean bigTiff = false;
-	private String compression = "LZW";
+	private String compression = "Uncompressed";
 
 	/** Overwrite files that already exist in the output directory. */
 	public ConversionOptions overwrite(final boolean overwrite) {
@@ -51,7 +51,10 @@ public class ConversionOptions {
 		return this;
 	}
 
-	/** TIFF compression: {@code Uncompressed}, {@code LZW}, {@code JPEG-2000}... */
+	/**
+	 * TIFF compression: {@code Uncompressed} (the default, matching the
+	 * reference ImageXpress export), {@code LZW}, {@code JPEG-2000}...
+	 */
 	public ConversionOptions compression(final String compression) {
 		this.compression = compression;
 		return this;

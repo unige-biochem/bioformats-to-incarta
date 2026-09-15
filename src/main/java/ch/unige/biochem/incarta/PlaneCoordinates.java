@@ -26,12 +26,14 @@
 package ch.unige.biochem.incarta;
 
 /**
- * Where a single 2D plane sits inside the source dataset: which series it came
- * from, which well and field of the plate (when the source describes a plate),
- * and its channel / z / timepoint indices.
+ * A single 2D plane of the source dataset: where it sits (series, well, field,
+ * channel, z, t) and what the acquisition recorded about it (stage position,
+ * exposure, pixel statistics).
  * <p>
  * All indices are zero-based. {@link #wellRow()} and {@link #wellColumn()} are
- * {@code -1} when the source carries no plate metadata.
+ * {@code -1} when the source carries no plate metadata. The acquisition values
+ * are optional: they are {@code null} when the source does not describe them,
+ * and a layout must then decide whether to omit or default them.
  */
 public class PlaneCoordinates {
 
@@ -44,6 +46,16 @@ public class PlaneCoordinates {
 	private final String channelName;
 	private final int z;
 	private final int t;
+
+	private Double positionXUm;
+	private Double positionYUm;
+	private Double positionZUm;
+	private Double exposureMs;
+	private Double timestampSeconds;
+	private Double min;
+	private Double max;
+	private Double mean;
+	private boolean integerPixels = true;
 
 	public PlaneCoordinates(final int series, final String seriesName,
 		final int wellRow, final int wellColumn, final int field,
@@ -69,6 +81,53 @@ public class PlaneCoordinates {
 	public String channelName() { return channelName; }
 	public int z() { return z; }
 	public int t() { return t; }
+
+	/** Stage position of this plane, in micrometres. */
+	public PlaneCoordinates positionUm(final Double x, final Double y,
+		final Double z)
+	{
+		this.positionXUm = x;
+		this.positionYUm = y;
+		this.positionZUm = z;
+		return this;
+	}
+
+	public PlaneCoordinates exposureMs(final Double exposureMs) {
+		this.exposureMs = exposureMs;
+		return this;
+	}
+
+	/** Acquisition time of this plane as seconds since the Unix epoch. */
+	public PlaneCoordinates timestampSeconds(final Double timestampSeconds) {
+		this.timestampSeconds = timestampSeconds;
+		return this;
+	}
+
+	/**
+	 * Pixel statistics of the plane.
+	 *
+	 * @param integerPixels whether the pixel type is integral, so that the
+	 *          statistics can be written without a fractional part
+	 */
+	public PlaneCoordinates statistics(final Double min, final Double max,
+		final Double mean, final boolean integerPixels)
+	{
+		this.min = min;
+		this.max = max;
+		this.mean = mean;
+		this.integerPixels = integerPixels;
+		return this;
+	}
+
+	public Double positionXUm() { return positionXUm; }
+	public Double positionYUm() { return positionYUm; }
+	public Double positionZUm() { return positionZUm; }
+	public Double exposureMs() { return exposureMs; }
+	public Double timestampSeconds() { return timestampSeconds; }
+	public Double min() { return min; }
+	public Double max() { return max; }
+	public Double mean() { return mean; }
+	public boolean hasIntegerPixels() { return integerPixels; }
 
 	/** True when the source dataset described a plate this plane belongs to. */
 	public boolean hasWell() { return wellRow >= 0 && wellColumn >= 0; }

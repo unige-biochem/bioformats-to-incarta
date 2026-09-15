@@ -32,7 +32,7 @@ import java.util.List;
 /**
  * Decides how a converted dataset is laid out on disk so that IN Carta can
  * import it: the relative path of every plane file, and whatever plate-level
- * metadata file has to sit next to them.
+ * index file has to sit next to them.
  * <p>
  * Everything IN Carta specific lives behind this interface;
  * {@link IncartaConverter} only knows how to read planes and hand them over.
@@ -46,15 +46,21 @@ public interface IncartaLayout {
 	String relativePathFor(PlaneCoordinates plane);
 
 	/**
-	 * Called once after every plane has been written, to emit any index or
-	 * metadata file the importer expects alongside the images.
+	 * Called once after every plane has been written, to emit the index file the
+	 * importer expects alongside the images.
+	 * <p>
+	 * Implementations must name the images by calling
+	 * {@link #relativePathFor(PlaneCoordinates)} again rather than recomputing
+	 * the names, so that the index and the files on disk cannot drift apart.
 	 *
 	 * @param outputDirectory root of the converted dataset
+	 * @param dataset plate-level metadata of the source
 	 * @param planes every plane that was written, in write order
 	 */
 	default void writeDatasetMetadata(final Path outputDirectory,
-		final List<PlaneCoordinates> planes) throws IOException
+		final DatasetDescription dataset, final List<PlaneCoordinates> planes)
+		throws IOException
 	{
-		// No metadata file by default.
+		// No index file by default.
 	}
 }

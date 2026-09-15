@@ -29,7 +29,7 @@ import java.io.File;
 import java.util.List;
 
 import ch.unige.biochem.incarta.ConversionOptions;
-import ch.unige.biochem.incarta.DefaultIncartaLayout;
+import ch.unige.biochem.incarta.ImageXpressLayout;
 import ch.unige.biochem.incarta.IncartaConverter;
 import ch.unige.biochem.incarta.PlaneCoordinates;
 
@@ -67,9 +67,9 @@ public class BioformatsToIncartaCommand implements Command {
 		min = "-1", required = false)
 	int series = -1;
 
-	@Parameter(label = "Compression", choices = { "LZW", "Uncompressed",
+	@Parameter(label = "Compression", choices = { "Uncompressed", "LZW",
 		"JPEG-2000", "JPEG-2000 Lossy", "zlib" }, required = false)
-	String compression = "LZW";
+	String compression = "Uncompressed";
 
 	@Parameter(label = "BigTIFF", description = "Needed for planes above the 4 GB TIFF limit",
 		required = false)
@@ -89,9 +89,9 @@ public class BioformatsToIncartaCommand implements Command {
 			.bigTiff(bigTiff) //
 			.overwrite(overwrite);
 
-		final String base = DefaultIncartaLayout.baseNameOf(inputFile.getName());
+		final String plate = ImageXpressLayout.baseNameOf(inputFile.getName());
 		final IncartaConverter converter = new IncartaConverter(
-			new DefaultIncartaLayout(base), options);
+			new ImageXpressLayout(plate), options);
 
 		try {
 			final List<PlaneCoordinates> planes = converter.convert(inputFile.toPath(),
