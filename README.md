@@ -41,10 +41,27 @@ out/
   ...
 ```
 
-**It has never been through a real IN Carta import.** Bio-Formats cannot read an
-`.xdce` back, so nothing in this repository can validate the output; only a
-trial import can. The decisions taken without evidence are listed in
-[UNKNOWNS.md](UNKNOWNS.md) - read it before trusting a converted plate.
+**Converted datasets do import into IN Carta.** A synthetic 96-well plate and a
+real Leica `.lif` were both imported successfully in September and October 2026,
+with the right pixel size, wells, sites, channels and Z. A converted folder also
+still imports after being moved.
+
+Known limits:
+
+- **One plate per source.** An IN Carta experiment is one plate, so a source
+  holding several is refused rather than silently flattened into one.
+- **Channel colours are inferred.** IN Carta colours a channel by its emission
+  wavelength, and the `.xdce` has no colour field, so a source without
+  wavelengths gets one derived from its display colour. See
+  `EmissionWavelengths`.
+- **No projections.** The reference export has a `_Projection` sibling dataset;
+  the converter does not produce one.
+- **Uneven Z across sites** makes IN Carta warn, then import anyway.
+
+Bio-Formats cannot read an `.xdce` back, so nothing in this repository can
+validate the output; only a trial import can. What each import settled, and what
+is still guesswork, is in [UNKNOWNS.md](UNKNOWNS.md) - read it before trusting a
+converted plate.
 
 ## Architecture
 

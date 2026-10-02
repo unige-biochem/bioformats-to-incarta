@@ -103,6 +103,7 @@ public class IncartaConverter {
 
 		final List<PlaneCoordinates> written = new ArrayList<>();
 		try {
+			refuseMultiplePlates(source);
 			final Map<Integer, int[]> wells = wellsBySeries(source);
 			final DatasetDescription dataset = describeDataset(source, reader);
 			final int total = countPlanes(reader);
@@ -263,6 +264,30 @@ public class IncartaConverter {
 		}
 		catch (final Exception e) {
 			// Leave the objective undescribed rather than guessing.
+		}
+	}
+
+	/**
+	 * IN Carta opens one experiment at a time and an experiment is one plate, so
+	 * a source holding several of them has to become several datasets. Until the
+	 * converter can split them, it refuses: a single index would carry the first
+	 * plate's geometry and every plate's wells, and nothing would say so.
+	 */
+	private static void refuseMultiplePlates(final IMetadata source)
+		throws FormatException
+	{
+		final int plates;
+		try {
+			plates = source.getPlateCount();
+		}
+		catch (final Exception e) {
+			return;
+		}
+		if (plates > 1) {
+			throw new FormatException("This source holds " + plates +
+				" plates, and one IN Carta experiment is one plate. Converting " +
+				"several plates at once is not supported yet: extract one plate per " +
+				"file, or convert a single series at a time.");
 		}
 	}
 

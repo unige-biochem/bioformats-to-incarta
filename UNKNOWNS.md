@@ -28,6 +28,18 @@ Two constraints make this list unavoidable rather than lazy:
 
 What IN Carta has actually said. Newest first.
 
+### 2026-10-02 — `trial1b` settles the pixel size and the moved folder
+
+- **A1:** the plate shows 0.65 µm, the converted pixel size, so the MetaMorph
+  `ImageDescription` block is not needed for calibration. Nothing in section A
+  now argues for building it.
+- **A5:** `trial1b` copied to another folder still imports, so `Images/@path`
+  is not binding and a converted plate can be moved or shared.
+- **One experiment is one plate** (from the instrument side): IN Carta opens a
+  single experiment at a time, and an experiment is a plate. A multi-plate
+  source therefore has to become one dataset per plate (B6). Until the
+  converter can split them it refuses such a source.
+
 ### 2026-10-02 — channel colour comes from the emission wavelength
 
 Trial 2b showed its three channels all green; they shared the 500 nm
@@ -132,11 +144,10 @@ entries (objective, timepoint, Z step, site coordinates, lamp settings).
 **We write:** nothing of the sort. `TiffWriter` emits an OME-XML description,
 and we set `PhysicalSizeX/Y/Z` on it so the calibration is at least present.
 
-**Settled by:** a trial import. If the plate imports and the scale bar is
-right, the block is inert and we are done. If calibration is lost but the
-import succeeds, we need only the `spatial-calibration-*` props. If the import
-rejects the files outright, the block is required and this becomes a large
-piece of work. **Ask before building it.**
+**Settled (2026-10-02):** not required. The plate imports and shows the
+converted pixel size, so the block is inert for import and calibration. It may
+still carry things IN Carta reads elsewhere — stage label, lamp settings — but
+nothing seen so far asks for it.
 
 ### A2. Must `<Application name>` say `MetaXpress`?
 
@@ -179,8 +190,9 @@ tolerates a stale path, but not proof it ignores it.
 
 **We write:** the absolute path of the actual output directory.
 
-**Settled by:** a trial import of a dataset moved after conversion. Worth
-knowing, because it decides whether a converted plate can be copied to a share.
+**Settled (2026-10-02):** not binding. A converted dataset copied to another
+folder imports from its new location, so a converted plate can be moved or put
+on a share.
 
 ### A6. Are TIFF compression and BigTIFF acceptable?
 
@@ -273,13 +285,17 @@ the files and the index from the same `relativePathFor` call.
 
 ### B6. More than one plate in a source
 
-**We write:** `describePlate` reads plate 0 only, though `wellsBySeries` maps
-wells from every plate. A two-plate source would therefore get one `.xdce` with
-the first plate's geometry and all the wells.
+**Settled in principle:** IN Carta opens one experiment at a time and an
+experiment is one plate, so a multi-plate source has to become one dataset per
+plate — one output directory and one `.xdce` each. That is a converter change,
+not a layout one.
 
-**Would like:** a multi-plate source (an HCS screen export). The likely right
-answer is one output directory and one `.xdce` per plate, which is a converter
-change, not a layout one.
+**We write:** nothing. Such a source is refused, with a message saying how many
+plates it holds, rather than flattened into a single index carrying the first
+plate's geometry and every plate's wells. Splitting is the next feature.
+
+**Would like:** a real multi-plate source (an HCS screen export) to check how
+the plates are named, since the output directories need names.
 
 ### B7. Filter-name vocabulary
 

@@ -35,6 +35,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import loci.formats.FormatException;
 import loci.formats.ImageReader;
 
 import org.junit.Rule;
@@ -44,6 +45,7 @@ import org.junit.rules.TemporaryFolder;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 /**
  * End-to-end conversion against Bio-Formats' {@code .fake} reader, so the test
@@ -168,6 +170,22 @@ public class IncartaConverterTest {
 		}
 		finally {
 			reader.close();
+		}
+	}
+
+	/** One IN Carta experiment is one plate, so several plates are refused. */
+	@Test
+	public void refusesASourceWithMoreThanOnePlate() throws Exception {
+		final Path input = fake(
+			"two&plates=2&plateRows=2&plateCols=3&fields=1&sizeX=8&sizeY=8&sizeC=1.fake");
+		final Path output = folder.newFolder("two").toPath();
+		try {
+			new IncartaConverter(new ImageXpressLayout("two")).convert(input, output,
+				null);
+			fail("A two-plate source should not convert");
+		}
+		catch (final FormatException e) {
+			assertTrue(e.getMessage().contains("2 plates"));
 		}
 	}
 
