@@ -11,7 +11,7 @@
 
 	<groupId>ch.unige.biochem</groupId>
 	<artifactId>bioformats-to-incarta</artifactId>
-	<version>0.1.0-SNAPSHOT</version>
+	<version>0.1.1-SNAPSHOT</version>
 
 	<name>Bio-Formats to IN Carta</name>
 	<description>Converts any Bio-Formats supported image file into an IN Carta compatible format.</description>
