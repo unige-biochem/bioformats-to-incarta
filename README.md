@@ -73,9 +73,15 @@ converted plate.
 | `DatasetDescription` | Plate-level metadata the index file needs |
 | `PlaneCoordinates` | series / well / field / c / z / t of a plane, plus its stage position, exposure and pixel statistics |
 | `ConversionOptions` | series selection, compression, BigTIFF, overwrite |
-| `command.BioformatsToIncartaCommand` | The Fiji dialog around the converter |
+| `command.BioformatsToIncartaCommand` | The Fiji dialog around the converter. Reports progress through a SciJava `Task`, and cancelling that task stops the conversion before its next plane. A failure is thrown, not just logged |
 
 Tests run against Bio-Formats' `.fake` reader, so they need no data files.
+
+The command needs only SciJava and Bio-Formats. ImageJ is a test dependency,
+used by `LaunchInFiji` (under `src/test`) to open the dialog from the IDE. This
+keeps a headless run small: the command line and window in
+[bioformats-to-incarta-app](https://github.com/unige-biochem/bioformats-to-incarta-app)
+run this artifact through jgo, without Fiji.
 
 ## Development
 

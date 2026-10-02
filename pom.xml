@@ -77,7 +77,6 @@
 
 	<properties>
 		<package-name>ch.unige.biochem.incarta</package-name>
-		<main-class>ch.unige.biochem.incarta.command.BioformatsToIncartaCommand</main-class>
 		<license.licenseName>mit</license.licenseName>
 		<license.copyrightOwners>University of Geneva</license.copyrightOwners>
 
@@ -87,11 +86,9 @@
 
 	<dependencies>
 
-		<dependency>
-			<groupId>net.imagej</groupId>
-			<artifactId>imagej</artifactId>
-		</dependency>
-
+		<!-- NB: SciJava and Bio-Formats are all the command needs. ImageJ is only
+		     for LaunchInFiji, so it stays in test scope: a headless run (jgo,
+		     bioformats-to-incarta-app) then resolves a fraction of the jars. -->
 		<dependency>
 			<groupId>org.scijava</groupId>
 			<artifactId>scijava-common</artifactId>
@@ -104,15 +101,18 @@
 			<artifactId>formats-gpl</artifactId>
 		</dependency>
 
-		<!-- Runtime dependencies -->
+		<!-- Test scope dependencies -->
 
 		<dependency>
 			<groupId>net.imagej</groupId>
-			<artifactId>imagej-legacy</artifactId>
-			<scope>runtime</scope>
+			<artifactId>imagej</artifactId>
+			<scope>test</scope>
 		</dependency>
-
-		<!-- Test scope dependencies -->
+		<dependency>
+			<groupId>net.imagej</groupId>
+			<artifactId>imagej-legacy</artifactId>
+			<scope>test</scope>
+		</dependency>
 
 		<dependency>
 			<groupId>junit</groupId>

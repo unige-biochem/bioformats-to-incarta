@@ -30,6 +30,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.concurrent.CancellationException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -186,6 +187,39 @@ public class IncartaConverterTest {
 		}
 		catch (final FormatException e) {
 			assertTrue(e.getMessage().contains("2 plates"));
+		}
+	}
+
+	/** A stopped conversion keeps its planes but never gets an index. */
+	@Test
+	public void stopsBeforeTheNextPlaneWhenCanceled() throws Exception {
+		final Path input = fake("stop&sizeX=8&sizeY=8&sizeC=2&sizeZ=3.fake");
+		final Path output = folder.newFolder("stop").toPath();
+		final int[] updates = { 0 };
+		try {
+			new IncartaConverter(new ImageXpressLayout("stop")).convert(input,
+				output, new IncartaConverter.Progress() {
+
+					@Override
+					public void update(final int done, final int total,
+						final String message)
+					{
+						updates[0]++;
+					}
+
+					@Override
+					public boolean isCanceled() {
+						return updates[0] == 2;
+					}
+				});
+			fail("A canceled conversion should not finish");
+		}
+		catch (final CancellationException e) {
+			assertTrue(e.getMessage().contains("2 of 6"));
+		}
+		assertEquals(2, tiffNames(output).size());
+		try (Stream<Path> files = Files.list(output)) {
+			assertTrue(files.noneMatch(p -> p.toString().endsWith(".xdce")));
 		}
 	}
 

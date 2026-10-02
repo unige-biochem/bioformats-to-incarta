@@ -37,6 +37,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CancellationException;
 
 import loci.common.DataTools;
 import loci.common.services.DependencyException;
@@ -69,6 +70,16 @@ public class IncartaConverter {
 	public interface Progress {
 
 		void update(int done, int total, String message);
+
+		/**
+		 * Asked before each plane. Returning {@code true} stops the conversion
+		 * with a {@link CancellationException}: the planes already written stay,
+		 * and no dataset index is written, so a stopped conversion can never be
+		 * mistaken for a finished one.
+		 */
+		default boolean isCanceled() {
+			return false;
+		}
 	}
 
 	private final IncartaLayout layout;
@@ -123,6 +134,10 @@ public class IncartaConverter {
 						coords));
 
 					if (progress != null) {
+						if (progress.isCanceled()) {
+							throw new CancellationException("Stopped after " + done +
+								" of " + total + " planes");
+						}
 						progress.update(done, total, target.getFileName().toString());
 					}
 					if (Files.exists(target) && !options.isOverwrite()) {

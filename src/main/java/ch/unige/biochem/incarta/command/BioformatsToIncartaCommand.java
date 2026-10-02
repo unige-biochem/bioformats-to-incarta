@@ -27,23 +27,31 @@ package ch.unige.biochem.incarta.command;
 
 import java.io.File;
 import java.util.List;
+import java.util.concurrent.CancellationException;
 
 import ch.unige.biochem.incarta.ConversionOptions;
 import ch.unige.biochem.incarta.ImageXpressLayout;
 import ch.unige.biochem.incarta.IncartaConverter;
 import ch.unige.biochem.incarta.PlaneCoordinates;
 
-import net.imagej.ImageJ;
 import org.scijava.ItemIO;
 import org.scijava.app.StatusService;
 import org.scijava.command.Command;
 import org.scijava.log.LogService;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
+import org.scijava.task.Task;
+import org.scijava.task.TaskService;
 
 /**
  * Converts any Bio-Formats supported image file into an IN Carta compatible
  * format.
+ * <p>
+ * Progress is reported through a {@link Task} when a {@link TaskService} is
+ * present, which is also how the conversion is stopped: cancelling the task
+ * stops it before the next plane. A failure is thrown rather than logged, so
+ * whoever runs the command - Fiji's menu or a headless caller holding the
+ * future - sees it as a failure.
  */
 @Plugin(type = Command.class, menuPath = "Plugins>UNIGE>Bio-Formats to IN Carta",
 	description = "Converts any Bio-Formats supported image file into an IN Carta compatible format.")
@@ -54,6 +62,9 @@ public class BioformatsToIncartaCommand implements Command {
 
 	@Parameter(required = false)
 	StatusService status;
+
+	@Parameter(required = false)
+	TaskService taskService;
 
 	@Parameter(label = "Input image", description = "Any file Bio-Formats can open",
 		style = "open")
@@ -93,24 +104,54 @@ public class BioformatsToIncartaCommand implements Command {
 		final IncartaConverter converter = new IncartaConverter(
 			new ImageXpressLayout(plate), options);
 
+		final Task task = taskService == null ? null : taskService.createTask(
+			"Bio-Formats to IN Carta: " + inputFile.getName());
+		if (task != null) {
+			// The default callback cancels a future this task does not have; the
+			// converter polls isCanceled() between planes instead.
+			task.setCancelCallBack(() -> {});
+			task.start();
+		}
+
 		try {
 			final List<PlaneCoordinates> planes = converter.convert(inputFile.toPath(),
-				outputDirectory.toPath(), (done, total, message) -> {
-					if (status != null) status.showStatus(done, total, message);
+				outputDirectory.toPath(), new IncartaConverter.Progress() {
+
+					@Override
+					public void update(final int done, final int total,
+						final String message)
+					{
+						if (task != null) {
+							// Each setter fires an event: the message goes first, so
+							// no listener sees new numbers next to an old message.
+							task.setStatusMessage(message);
+							task.setProgressMaximum(total);
+							task.setProgressValue(done);
+						}
+						if (status != null) status.showStatus(done, total, message);
+					}
+
+					@Override
+					public boolean isCanceled() {
+						return task != null && task.isCanceled();
+					}
 				});
 			planesWritten = planes.size();
 			logger.info("Wrote " + planesWritten + " planes to " + outputDirectory);
 		}
-		catch (final Exception e) {
-			logger.error("Conversion of " + inputFile + " failed", e);
-			if (status != null) status.showStatus("Conversion failed: " + e.getMessage());
+		catch (final CancellationException e) {
+			logger.warn("Conversion of " + inputFile + " stopped: " + e
+				.getMessage() + ". " + outputDirectory +
+				" holds a partial dataset, without its .xdce index.");
+			if (status != null) status.showStatus("Conversion stopped");
 		}
-	}
-
-	/** Launches Fiji and this command - handy for debugging from the IDE. */
-	public static void main(String... args) {
-		final ImageJ ij = new ImageJ();
-		ij.ui().showUI();
-		ij.command().run(BioformatsToIncartaCommand.class, true);
+		catch (final Exception e) {
+			if (status != null) status.showStatus("Conversion failed: " + e.getMessage());
+			throw new IllegalStateException("Conversion of " + inputFile +
+				" failed: " + e.getMessage(), e);
+		}
+		finally {
+			if (task != null) task.finish();
+		}
 	}
 }
