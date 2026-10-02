@@ -28,6 +28,43 @@ Two constraints make this list unavoidable rather than lazy:
 
 What IN Carta has actually said. Newest first.
 
+### 2026-09-15 — `trial2-leica-lif-no-plate` (real Leica `.lif`, no plate)
+
+9 series of 1024×1024 uint8, 3 unnamed channels, 8–10 z, no plate metadata,
+converted to one well `A01` with 9 sites. Validation of the `.xdce` said:
+
+```
+ImageStack::AutoLeadAcquisitionProtocol::Plate::WellParameters::Width must be greater than 0
+ImageStack::AutoLeadAcquisitionProtocol::Plate::WellParameters::Size must be greater than 0
+ImageStack::AutoLeadAcquisitionProtocol::Plate::WellParameters::Shape must not be empty
+ImageStack::AutoLeadAcquisitionProtocol::Plate::WellParameters::Height must be greater than 0
+```
+
+and a second, metadata stage said:
+
+```
+Expected Z Slices: 10. Number of expected z slices is incorrect for following
+Well:FOVIndex combinations: A - 1:F6:W2, A - 1:F4:W0, … (every wavelength of F1, F2, F4, F6, F7, F8)
+```
+
+The import still went ahead: all 9 sites, each with all of its own z slices.
+
+What it settles:
+
+- **A one-well plate is accepted** for a plateless source (B2), once the well
+  has parameters.
+- **`<WellParameters>` is required, `TopLeftWellCenterOffset` and `WellSpacing`
+  are not** — they were absent and not flagged. Fixed: a plate with no
+  tabulated footprint now gets a square well one field of view wide (1 mm with
+  no calibration). **That size is fiction.**
+- **IN Carta expects `number_of_slices` entries per site and wavelength** (B3),
+  and names the offenders by 0-based `field_index` / `wave_index` — F1, F2, F4,
+  F6, F7, F8 are exactly the series with fewer than 10 slices. It warns and
+  imports anyway. Decision: leave ragged stacks as they are; no padding.
+- **Unnamed channels at an identical placeholder wavelength were not flagged**
+  (B7). Whether IN Carta kept them as three distinct channels is not checked.
+- **8-bit TIFFs import.**
+
 ### 2026-09-15 — `trial1-minimal-96well` (synthetic `.fake` plate)
 
 96-well, 2 sites, 2 channels, 2-D, 512×512 uint16, 0.65 µm/px. The `.xdce`
@@ -149,12 +186,9 @@ spacing or well shape, so it cannot be derived from the source.
 
 **We write:** the ANSI/SLAS footprint for the well count (6, 12, 24, 48, 96,
 384, 1536 are tabulated in `ImageXpressLayout.Footprint`). For any other
-plate size we omit all three elements and keep only `<Plate columns rows
-name>`.
-
-**Known risk:** IN Carta checks `TopLeftWellCenterOffset` (it must be > 0, see
-the trial log), so omitting it probably triggers the same kind of warning. That
-includes the 1×1 plate invented for plateless sources (B2).
+plate size we write only `<WellParameters>`, as a square well one field of view
+wide, because IN Carta requires it; offset and spacing are omitted, which it
+accepted (see the trial log).
 
 **Would like:** a MetaXpress export of a **384-well** plate, to check the
 footprint numbers and confirm which attributes actually vary. Also useful: any
@@ -182,7 +216,13 @@ from.
 
 **We write:** nothing like it. Bio-Formats gives one `SizeZ` per series, so
 every channel of a converted dataset has the same depth and the duplication
-never arises.
+never arises within a site.
+
+**Seen in trial 2:** series of *different* depths do arise, and the protocol
+then declares the deepest. IN Carta warns ("Number of expected z slices is
+incorrect") but imports every site with its own slices. We leave it at that;
+padding like the reference would be the fix if the warning ever turns into a
+failure.
 
 **Would like:** a source where channels genuinely differ in depth (some readers
 split these into separate series). Then we would know whether IN Carta requires

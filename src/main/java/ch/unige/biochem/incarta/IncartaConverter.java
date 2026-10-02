@@ -233,8 +233,13 @@ public class IncartaConverter {
 				micrometres(physicalSize(source, first, 1)));
 
 			for (int c = 0; c < reader.getEffectiveSizeC(); c++) {
-				dataset.addWavelength(c, channelName(source, first, c), nanometres(
-					emissionWavelength(source, first, c)));
+				// IN Carta colours a channel by its emission wavelength, so a source
+				// that states none gets one standing in for its display colour.
+				final Double emission = nanometres(emissionWavelength(source, first,
+					c));
+				dataset.addWavelength(c, channelName(source, first, c),
+					emission != null ? emission : EmissionWavelengths.forChannel(
+						channelColour(source, first, c), c));
 			}
 			dataset.binning(binning(source, first));
 			dataset.acquisitionTime(acquisitionTime(source, first));
@@ -391,6 +396,18 @@ public class IncartaConverter {
 	{
 		try {
 			return meta.getChannelEmissionWavelength(series, channel);
+		}
+		catch (final Exception e) {
+			return null;
+		}
+	}
+
+	/** The channel's display colour, which LIF and CZI carry but OME-TIFF may not. */
+	private static ome.xml.model.primitives.Color channelColour(
+		final IMetadata meta, final int series, final int channel)
+	{
+		try {
+			return meta.getChannelColor(series, channel);
 		}
 		catch (final Exception e) {
 			return null;

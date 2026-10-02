@@ -61,9 +61,11 @@ public class ImageXpressLayout implements IncartaLayout {
 	};
 
 	/**
-	 * Emission wavelength declared for a channel whose source does not say. IN
-	 * Carta rejects a {@code <Wavelengths>} filter without one ("Wavelength must
-	 * not be empty"), so a value has to be written: this one is fiction.
+	 * Last-resort emission wavelength, for a {@link DatasetDescription} built by
+	 * hand that leaves one out. IN Carta rejects a {@code <Wavelengths>} filter
+	 * without a wavelength ("Wavelength must not be empty"), so something has to
+	 * be written. The converter itself always supplies a value, through
+	 * {@link EmissionWavelengths}.
 	 */
 	static final double UNKNOWN_EMISSION_NM = 500;
 
@@ -74,7 +76,8 @@ public class ImageXpressLayout implements IncartaLayout {
 	 * <p>
 	 * The {@code .xdce} declares this geometry and the source rarely does, so it
 	 * is filled in from the ANSI/SLAS footprint when the plate has a standard
-	 * well count, and omitted entirely when it does not.
+	 * well count. Otherwise only {@code WellParameters} is written, sized to one
+	 * field of view, because IN Carta will not do without it.
 	 * <p>
 	 * OME's {@code Plate/@WellOriginX/Y} is no substitute: it is the origin of
 	 * the fields within a well, not the position of well A1 on the plate, and a
@@ -257,6 +260,15 @@ public class ImageXpressLayout implements IncartaLayout {
 			out.write("\t\t\t<WellSpacing horizontal=\"" + decimal(footprint.spacing) +
 				"\" vertical=\"" + decimal(footprint.spacing) + "\" unit=\"mm\"/>\n");
 		}
+		else {
+			// IN Carta requires WellParameters with a positive size and a shape,
+			// but did not ask for the offset or spacing. A square well exactly one
+			// field of view wide is the least invented size available.
+			final double size = fieldOfViewMm(dataset);
+			out.write("\t\t\t<WellParameters width=\"" + decimal(size) +
+				"\" unit=\"mm\" height=\"" + decimal(size) + "\" size=\"" + decimal(
+					size) + "\" shape=\"Square\"/>\n");
+		}
 		out.write("\t\t</Plate>\n");
 	}
 
@@ -392,6 +404,19 @@ public class ImageXpressLayout implements IncartaLayout {
 	private static String specimenHolder(final DatasetDescription dataset) {
 		if (dataset.plateModel() != null) return dataset.plateModel();
 		return dataset.plateRows() * dataset.plateColumns() + "-well plate";
+	}
+
+	/**
+	 * The larger side of one image, in millimetres, or 1 mm when the source has
+	 * no pixel size.
+	 */
+	private static double fieldOfViewMm(final DatasetDescription dataset) {
+		if (dataset.pixelWidthUm() == null || dataset.pixelHeightUm() == null) {
+			return 1;
+		}
+		final double side = Math.max(dataset.sizeX() * dataset.pixelWidthUm(),
+			dataset.sizeY() * dataset.pixelHeightUm()) / 1000;
+		return side > 0 ? side : 1;
 	}
 
 	private static double zStep(final DatasetDescription dataset) {

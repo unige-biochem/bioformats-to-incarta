@@ -101,6 +101,24 @@ public class ImageXpressLayoutTest {
 		assertTrue(xdce.endsWith("</ImageStack>\n"));
 	}
 
+	/** IN Carta requires a sized, shaped well even on a plate with no footprint. */
+	@Test
+	public void sizesTheWellOfANonStandardPlateToOneFieldOfView()
+		throws Exception
+	{
+		final Path output = folder.newFolder("oneWell").toPath();
+		final DatasetDescription dataset = new DatasetDescription() //
+			.plateSize(1, 1) //
+			.frameSize(1024, 512) //
+			.pixelSizeUm(0.5, 0.5) //
+			.addWavelength(0, "channel0", null);
+		layout.writeDatasetMetadata(output, dataset, planes());
+		final String xdce = read(output.resolve("plate1.xdce"));
+
+		assertTrue(xdce.contains(
+			"<WellParameters width=\"0.512000\" unit=\"mm\" height=\"0.512000\" size=\"0.512000\" shape=\"Square\"/>"));
+	}
+
 	/** IN Carta refuses a protocol wavelength without an emission value. */
 	@Test
 	public void declaresAnEmissionWavelengthEvenWhenTheSourceHasNone()
