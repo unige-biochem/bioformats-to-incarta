@@ -121,6 +121,25 @@
 		</dependency>
 	</dependencies>
 
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<configuration>
+					<!--
+					NB: Keep every dependency on the classpath rather than the module
+					path. Bio-Formats pulls in ome:turbojpeg, whose TJExample.class
+					sits in the default package, so javadoc cannot derive a module
+					descriptor for it and the attach-javadocs execution of a release
+					build fails.
+					-->
+					<legacyMode>true</legacyMode>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+
 	<repositories>
 		<repository>
 			<id>scijava.public</id>
