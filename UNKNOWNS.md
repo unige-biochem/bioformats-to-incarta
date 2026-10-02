@@ -28,6 +28,22 @@ Two constraints make this list unavoidable rather than lazy:
 
 What IN Carta has actually said. Newest first.
 
+### 2026-10-02 — channel colour comes from the emission wavelength
+
+Trial 2b showed its three channels all green; they shared the 500 nm
+placeholder. `trial3-colour-probe` (7 channels, hand-set wavelengths from 350 to
+700 nm, no warnings) confirmed that IN Carta takes the channel colour from the
+`<EmissionFilter>` wavelength. Nothing in the `.xdce` or the `.JDCE` carries a
+colour.
+
+Consequence: a source with display colours but no wavelengths — a LIF, for one —
+loses its colours unless we turn each colour back into a wavelength.
+`EmissionWavelengths` now does that, matching the nearest conventional channel
+colour, and gives channels with no colour either seven distinct wavelengths by
+index. The table is arbitrary where the inverse is ambiguous, magenta most of
+all. Pending: which colour IN Carta actually paints for each probe wavelength,
+which would let the table be calibrated instead of assumed.
+
 ### 2026-09-15 — `trial2-leica-lif-no-plate` (real Leica `.lif`, no plate)
 
 9 series of 1024×1024 uint8, 3 unnamed channels, 8–10 z, no plate metadata,
@@ -274,9 +290,13 @@ matching the `<Wavelengths>` block.
 **We write:** the OME channel name in all three places, whatever it is
 (`channel0` when the source has none).
 
-**Would like:** an example with unusual channel names, or word from a user
-whether IN Carta groups channels by these strings. If it matches them against a
-known vocabulary, arbitrary channel names will not group correctly.
+**Settled in part:** names like `channel0` and `Name` were accepted, and three
+channels sharing one wavelength stayed three channels, so the names are not
+matched against a vocabulary for grouping. The wavelength, not the name, sets
+the colour (see the trial log).
+
+**Would like:** an example with unusual channel names, in case the names feed
+anything else — the measurement column headers, say.
 
 ---
 
